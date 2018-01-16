@@ -1,0 +1,6 @@
+[report]
+include =
+    src/allpay/*
+omit =
+    */test*
+    */upgrades/*

@@ -1,0 +1,4 @@
+graft src/allpay
+graft docs
+include *.rst
+global-exclude *.pyc

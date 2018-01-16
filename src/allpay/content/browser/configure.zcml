@@ -1,0 +1,51 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    xmlns:plone="http://namespaces.plone.org/plone"
+    i18n_domain="allpay.content">
+
+  <!-- Set overrides folder for Just-a-Bunch-Of-Templates product -->
+  <include package="z3c.jbot" file="meta.zcml" />
+  <browser:jbot
+      directory="overrides"
+      layer="allpay.content.interfaces.IAllpayContentLayer"
+      />
+
+  <!-- Publish static files -->
+  <plone:static
+      name="allpay.content"
+      type="plone"
+      directory="static"
+      />
+  <browser:page 
+      name="pay"
+      for="*"
+      class=".bills.Pay"
+      layer="zope.interface.Interface"
+      permission="zope2.View"
+      />
+<!-- logistics -->
+  <browser:page 
+      name="logistics_map"
+      for="*"
+      class=".logistics.LogisticsMap"
+      layer="zope.interface.Interface"
+      permission="zope2.View"
+      />
+  <browser:page 
+      name="logistics_express"
+      for="*"
+      class=".logistics.LogisticsExpress"
+      layer="zope.interface.Interface"
+      permission="zope2.View"
+      />
+
+
+<!-- configlet -->
+  <browser:page
+    name="allpaySettingControlPanel"
+    for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+    permission="cmf.ManagePortal"
+    class=".allpaySetting.AllpaySettingControlPanelView"
+  />
+</configure>
