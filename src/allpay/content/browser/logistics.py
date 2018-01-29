@@ -19,8 +19,9 @@ from Products.CMFPlone.utils import safe_unicode
 
 
 logger = logging.getLogger('allpay.content')
-LIMIT=20
+LIMIT = 20
 ENGINE = create_engine(DBSTR, echo=True)
+
 
 class LogisticsMap(BrowserView):
     def __call__(self):
@@ -35,28 +36,30 @@ class LogisticsMap(BrowserView):
         ServerReplyURL = api.portal.get_registry_record('%s.ServerReplyURL' % allpay_config)
         MerchantTradeNo = self.request.get('MerchantTradeNo')
         map_info = {
-            'MerchantID':MerchantID,
-            'MerchantTradeNo':MerchantTradeNo,
-            'LogisticsType':'CVS',
-            'LogisticsSubType':'UNIMART',
-            'IsCollection':'N',
-            'ServerReplyURL':ServerReplyURL
+            'MerchantID': MerchantID,
+            'MerchantTradeNo': MerchantTradeNo,
+            'LogisticsType': 'CVS',
+            'LogisticsSubType': 'UNIMART',
+            'IsCollection': 'N',
+            'ServerReplyURL': ServerReplyURL
         }
 
         LogisticsMapURL = api.portal.get_registry_record('%s.LogisticsMapURL' % allpay_config)
 
-        form_html = '<form id="allPay-Form" name="allPayForm" method="post" target="_self" action="%s" style="adisplay: none;">' % LogisticsMapURL
+        form_html = '<form id="allPay-Form" name="allPayForm" method="post" target="_self" action="%s" style="display: none;">' % LogisticsMapURL
         for i, val in enumerate(map_info):
-            form_html = "".join((form_html, "<input type='ahidden' name='{}' value='{}' />".format(val.decode('utf-8'), str(map_info[val]).decode('utf-8'))))
+            form_html = "".join((form_html, "<input type='hidden' name='{}' value='{}' />".format(val.decode('utf-8'), str(map_info[val]).decode('utf-8'))))
 
         form_html = "".join((form_html, '<input type="submit" class="large" id="payment-btn" value="BUY" /></form>'))
         form_html = "".join((form_html, "<script>document.allPayForm.submit();</script>"))
-        
+
         return form_html
+
 
 class LogisticsExpress(BrowserView):
     allpay_config = 'allpay.content.browser.allpaySetting.IAllpaySetting'
     template = ViewPageTemplateFile("template/logistics_express.pt")
+
     def __call__(self):
         if api.user.is_anonymous():
             self.request.response.redirect(api.portal.get().absolute_url())
@@ -68,13 +71,13 @@ class LogisticsExpress(BrowserView):
         MerchantID = api.portal.get_registry_record('%s.MerchantID' % allpay_config)
         LogisticsReplyURL = api.portal.get_registry_record('%s.LogisticsReplyURL' % allpay_config)
         ClientReplyURL = api.portal.get_registry_record('%s.ClientReplyURL' % allpay_config)
-        
+
         request = self.request
         CVSStoreID = request.get('CVSStoreID', '')
         MerchantTradeNo = request.get('MerchantTradeNo', '')
         execSql = SqlObj()
 
-        #抓buyer,order,reciver資料
+        # 抓buyer,order,reciver資料
         execStr = """SELECT reciver_set.*,order_set.*,buyer_set.* FROM reciver_set,order_set,
             buyer_set WHERE reciver_set.id = order_set.reciver_id and order_set.buyer_id = 
             buyer_set.id and order_set.MerchantTradeNo='{}'""".format(MerchantTradeNo)
@@ -95,52 +98,52 @@ class LogisticsExpress(BrowserView):
         if CVSStoreID:
             # 超商取貨
             logistics_info = {
-                'MerchantID':MerchantID,
-                'MerchantTradeNo':MerchantTradeNo,
-                'MerchantTradeDate':'%s' % datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                'LogisticsType':'CVS',
-                'LogisticsSubType':'UNIMART',
-                'GoodsAmount':GoodsAmount, 
-                # 'GoodsName':GoodsName,
-                'SenderName':SenderName,
-                'SenderCellPhone':SenderCellPhone,
-                'ReceiverName':ReceiverName,
-                'ReceiverCellPhone':ReceiverCellPhone,
-                'ServerReplyURL':LogisticsReplyURL,
-                'ClientReplyURL':ClientReplyURL,
-                'IsCollection':'N',     
-                'ReceiverStoreID':CVSStoreID       
+                'MerchantID': MerchantID,
+                'MerchantTradeNo': MerchantTradeNo,
+                'MerchantTradeDate': '%s' % datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                'LogisticsType': 'CVS',
+                'LogisticsSubType': 'UNIMART',
+                'GoodsAmount': GoodsAmount, 
+                # 'GoodsName': GoodsName,
+                'SenderName': SenderName,
+                'SenderCellPhone': SenderCellPhone,
+                'ReceiverName': ReceiverName,
+                'ReceiverCellPhone': ReceiverCellPhone,
+                'ServerReplyURL': LogisticsReplyURL,
+                'ClientReplyURL': ClientReplyURL,
+                'IsCollection': 'N',     
+                'ReceiverStoreID': CVSStoreID       
             }
         else:
             # 宅配
             logistics_info = {
-                'MerchantID':MerchantID,
-                'MerchantTradeNo':MerchantTradeNo,
-                'MerchantTradeDate':'%s' % datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                'LogisticsType':'HOME',
-                'LogisticsSubType':'TCAT',
-                'GoodsAmount':GoodsAmount,
-                # 'GoodsName':GoodsName,
-                'SenderName':SenderName,
-                'SenderCellPhone':SenderCellPhone,
-                'ReceiverName':ReceiverName,
-                'ReceiverCellPhone':ReceiverCellPhone,
-                'ServerReplyURL':LogisticsReplyURL,
-                'IsCollection':'N',     
-                'SenderZipCode':SenderZipCode,
-                'SenderAddress':SenderAddress,
-                'ReceiverZipCode':ReceiverZipCode,
-                'ReceiverAddress':ReceiverAddress,
-                'ClientReplyURL':ClientReplyURL,
-                'Temperature':'0001',
-                'Distance':'00',
-                'Specification':'0001',
+                'MerchantID': MerchantID,
+                'MerchantTradeNo': MerchantTradeNo,
+                'MerchantTradeDate': '%s' % datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                'LogisticsType': 'HOME',
+                'LogisticsSubType': 'TCAT',
+                'GoodsAmount': GoodsAmount,
+                # 'GoodsName': GoodsName,
+                'SenderName': SenderName,
+                'SenderCellPhone': SenderCellPhone,
+                'ReceiverName': ReceiverName,
+                'ReceiverCellPhone': ReceiverCellPhone,
+                'ServerReplyURL': LogisticsReplyURL,
+                'IsCollection': 'N',     
+                'SenderZipCode': SenderZipCode,
+                'SenderAddress': SenderAddress,
+                'ReceiverZipCode': ReceiverZipCode,
+                'ReceiverAddress': ReceiverAddress,
+                'ClientReplyURL': ClientReplyURL,
+                'Temperature': '0001',
+                'Distance': '00',
+                'Specification': '0001',
             }
         logistics_info = self.encoded_dict(logistics_info)
         urlEncodeString = self.getUrlEncodeString(logistics_info)
         CheckMacValue = hashlib.md5(urlEncodeString).hexdigest().upper()
         logistics_info['CheckMacValue'] = CheckMacValue
-        
+
         self.LogisticsExpressCreateURL = api.portal.get_registry_record('%s.LogisticsExpressCreateURL' % allpay_config)
         self.logistics_info = logistics_info
         return self.template()
@@ -170,5 +173,3 @@ class LogisticsExpress(BrowserView):
         sortedString = 'HashKey=%s&%sHashIV=%s' % (str(hashKey), sortedString, str(hashIv))
         sortedString = urllib.quote_plus(sortedString).lower()
         return sortedString
-
-

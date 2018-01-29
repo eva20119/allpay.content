@@ -11,8 +11,10 @@ import hashlib
 import urllib
 from Products.CMFPlone.utils import safe_unicode
 
+
 class Pay(BrowserView):
     allpay_config = 'allpay.content.browser.allpaySetting.IAllpaySetting'
+
     def __call__(self):
         form = self.request.form
         TotalAmount = 0
@@ -22,9 +24,9 @@ class Pay(BrowserView):
         del form['MerchantTradeNo']
         del form['_authenticator']
 
-        for k,v in form.items():
+        for k, v in form.items():
             json_data = json.loads(v)
-            ItemName += '%s,' %k
+            ItemName += '%s,' % k
             TotalAmount += json_data['amount'] * json_data['sale']
             TradeDesc += '{} x {}#'.format(k, json_data['amount'])
 
@@ -55,8 +57,8 @@ class Pay(BrowserView):
         }
         sortedString = ''
         try:
-            for k,v in sorted(payment_info.items()):
-                sortedString += '%s=%s&' %(k,str(v))
+            for k, v in sorted(payment_info.items()):
+                sortedString += '%s=%s&' % (k, str(v))
         except:
             import pdb;pdb.set_trace()
         sortedString = 'HashKey=%s&%sHashIV=%s' % (str(hashKey), sortedString, str(hashIv))
@@ -64,7 +66,7 @@ class Pay(BrowserView):
         sortedString = urllib.quote_plus(sortedString).lower()
         checkMacValue = hashlib.sha256(sortedString).hexdigest()
         checkMacValue = checkMacValue.upper()
-        payment_info['CheckMacValue'] =checkMacValue
+        payment_info['CheckMacValue'] = checkMacValue
 
         form_html = '<form id="allPay-Form" name="allPayForm" method="post" target="_self" action="%s" style="display: none;">' % AioCheckoutURL
         for i, val in enumerate(payment_info):
