@@ -101,7 +101,11 @@ class IAllpaySetting(Form.Schema):
         required=True,
         default=u'http://0b657783.ngrok.io/server_reply_url'
     )
-
+    LogisticsReplyURL = schema.TextLine(
+        title=_(u"Server Reply URL, for Logistics"),
+        description=_(u"LogisticsReplyURL, for allPay's logistics"),
+        required=False,
+    )
     ClientReplyURL = schema.TextLine(
         title=_(u"Client Reply URL"),
         description=_(u"ClientReplyURL, for allPay's logistics"),
