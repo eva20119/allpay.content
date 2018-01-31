@@ -77,9 +77,9 @@ class LogisticsExpress(BrowserView):
         MerchantTradeNo = request.get('MerchantTradeNo', '')
         execSql = SqlObj()
 
-        # 抓buyer,order,reciver資料
-        execStr = """SELECT reciver_set.*,order_set.*,buyer_set.* FROM reciver_set,order_set,
-            buyer_set WHERE reciver_set.id = order_set.reciver_id and order_set.buyer_id = 
+        # 抓buyer,order,receiver資料
+        execStr = """SELECT receiver_set.*,order_set.*,buyer_set.* FROM receiver_set,order_set,
+            buyer_set WHERE receiver_set.id = order_set.receiver_id and order_set.buyer_id = 
             buyer_set.id and order_set.MerchantTradeNo='{}'""".format(MerchantTradeNo)
         result = execSql.execSql(execStr)
         for item in result:
@@ -90,10 +90,10 @@ class LogisticsExpress(BrowserView):
             SenderCellPhone = tmp['buyer_cellNo']
             SenderZipCode = tmp['buyer_zip']
             SenderAddress = tmp['buyer_address']
-            ReceiverName = tmp['reciver_name']
-            ReceiverCellPhone = tmp['reciver_cellNo']
-            ReceiverZipCode = tmp['reciver_zip']
-            ReceiverAddress = tmp['reciver_address']
+            ReceiverName = tmp['receiver_name']
+            ReceiverCellPhone = tmp['receiver_cellNo']
+            ReceiverZipCode = tmp['receiver_zip']
+            ReceiverAddress = tmp['receiver_address']
 
         if CVSStoreID:
             # 超商取貨
