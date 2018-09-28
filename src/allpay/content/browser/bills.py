@@ -30,6 +30,7 @@ class Pay(BrowserView):
             TotalAmount += json_data['amount'] * json_data['sale']
             TradeDesc += '{} x {}#'.format(k, json_data['amount'])
 
+        abs_url = api.portal.get().absolute_url()
         allpay_config = self.allpay_config
         hashKey = api.portal.get_registry_record('%s.CheckoutHashKey' % allpay_config)
         hashIv = api.portal.get_registry_record('%s.CheckoutHashIV' % allpay_config)
@@ -39,7 +40,6 @@ class Pay(BrowserView):
         ClientBackURL = api.portal.get_registry_record('%s.ClientBackURL' % allpay_config)
         ReturnURL = api.portal.get_registry_record('%s.ReturnURL' % allpay_config)
         ChoosePayment = api.portal.get_registry_record('%s.ChoosePayment' % allpay_config)
-
         payment_info = {
             'MerchantTradeNo': MerchantTradeNo,# 訂單編號
             'ItemName': TradeDesc, # 購物資訊
@@ -53,7 +53,7 @@ class Pay(BrowserView):
             'MerchantID': MerchantID,
             'PaymentInfoURL': PaymentInfoURL,
             'OrderResultURL': '%s' % ClientBackURL,
-            'ClientBackURL': '%s?MerchantTradeNo=%s&RtnCode=1' % (ClientBackURL, MerchantTradeNo)
+            'ClientBackURL': '%s?buy=1' %abs_url
         }
         sortedString = ''
         try:
@@ -77,5 +77,5 @@ class Pay(BrowserView):
         form_html = "".join((form_html, '<input type="submit" class="large" id="payment-btn" value="BUY" /></form>'))
         form_html = "".join((form_html, "<script>document.allPayForm.submit();</script>"))
 
-        self.request.response.setCookie('itemInCart', [], path='/')
+        self.request.response.setCookie('shopCart', [], path='/')
         return form_html

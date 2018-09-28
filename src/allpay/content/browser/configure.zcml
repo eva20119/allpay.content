@@ -40,7 +40,33 @@
       permission="zope2.View"
       />
 
+  <browser:page
+      name="payment_info"
+      for="*"
+      class=".ec_pay.PaymentInfo"
+      permission="zope2.View"
+      />
+  
+  <browser:page
+      name="return_url"
+      for="*"
+      class=".ec_pay.ReturnUrl"
+      permission="zope2.View"
+      />
 
+  <browser:page
+      name="client_back_url"
+      for="*"
+      class=".ec_pay.ClientBackUrl"
+      permission="zope2.View"
+      />
+
+  <browser:page
+      name="logistics_reply_url"
+      for="*"
+      class=".ec_pay.LogisticsReplyURL"
+      permission="zope2.View"
+      />
 <!-- configlet -->
   <browser:page
     name="allpaySettingControlPanel"

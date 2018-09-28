@@ -14,7 +14,7 @@ import logging
 import hashlib
 import urllib
 import re
-from mingtak.ECBase.browser.views import SqlObj
+from db.connect.browser.views import SqlObj
 from Products.CMFPlone.utils import safe_unicode
 
 
@@ -78,22 +78,17 @@ class LogisticsExpress(BrowserView):
         execSql = SqlObj()
 
         # 抓buyer,order,receiver資料
-        execStr = """SELECT receiver_set.*,order_set.*,buyer_set.* FROM receiver_set,order_set,
-            buyer_set WHERE receiver_set.id = order_set.receiver_id and order_set.buyer_id = 
+        execStr = """SELECT order_set.*,buyer_set.* FROM order_set,buyer_set WHERE order_set.buyer_id =
             buyer_set.id and order_set.MerchantTradeNo='{}'""".format(MerchantTradeNo)
         result = execSql.execSql(execStr)
         for item in result:
             tmp = dict(item)
             GoodsAmount = tmp['total_amount']
             GoodsName = tmp['detail']
-            SenderName = tmp['buyer_name']
-            SenderCellPhone = tmp['buyer_cellNo']
-            SenderZipCode = tmp['buyer_zip']
-            SenderAddress = tmp['buyer_address']
-            ReceiverName = tmp['receiver_name']
-            ReceiverCellPhone = tmp['receiver_cellNo']
-            ReceiverZipCode = tmp['receiver_zip']
-            ReceiverAddress = tmp['receiver_address']
+            ReceiverName = tmp['buyer_name']
+            ReceiverCellPhone = tmp['buyer_cellNo']
+            ReceiverZipCode = tmp['buyer_zip']
+            ReceiverAddress = tmp['buyer_city'] + tmp['buyer_district'] + tmp['buyer_address']
 
         if CVSStoreID:
             # 超商取貨
@@ -123,17 +118,18 @@ class LogisticsExpress(BrowserView):
                 'LogisticsType': 'HOME',
                 'LogisticsSubType': 'TCAT',
                 'GoodsAmount': GoodsAmount,
-                # 'GoodsName': GoodsName,
-                'SenderName': SenderName,
-                'SenderCellPhone': SenderCellPhone,
-                'ReceiverName': ReceiverName,
-                'ReceiverCellPhone': ReceiverCellPhone,
-                'ServerReplyURL': LogisticsReplyURL,
-                'IsCollection': 'N',     
-                'SenderZipCode': SenderZipCode,
-                'SenderAddress': SenderAddress,
+                'SenderPhone': '0987654321',
+                'RecviverPhone': '09877654321',
+                'SenderCellPhone': '0987654321',
+                'SenderName': 'sender',
+                'SenderZipCode': '123',
+                'SenderAddress': '445612231',
                 'ReceiverZipCode': ReceiverZipCode,
                 'ReceiverAddress': ReceiverAddress,
+                'ReceiverCellPhone': ReceiverCellPhone,
+                'ReceiverName': ReceiverName,
+                'ServerReplyURL': LogisticsReplyURL,
+                'IsCollection': 'N',
                 'ClientReplyURL': ClientReplyURL,
                 'Temperature': '0001',
                 'Distance': '00',

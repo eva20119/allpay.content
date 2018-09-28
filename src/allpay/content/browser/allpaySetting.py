@@ -1,7 +1,7 @@
 from allpay.content import _
 from plone.app.registry.browser.controlpanel import RegistryEditForm
 from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper
-
+from plone import api
 from plone.z3cform import layout
 from z3c.form import form
 from plone.directives import form as Form
@@ -9,7 +9,6 @@ from zope import schema
 
 
 class IAllpaySetting(Form.Schema):
-
     """ Basic setting for AllPay """
     MerchantID = schema.TextLine(
         title=_(u"Merchant ID"),
@@ -44,7 +43,6 @@ class IAllpaySetting(Form.Schema):
         title=_(u"Payment Info URL"),
         description=_(u"Payment info url."),
         required=True,
-        default=u"http://localhost:8080/return_url"
     )
 
     ClientBackURL = schema.TextLine(
@@ -119,6 +117,15 @@ class IAllpaySetting(Form.Schema):
         default=u"http://0b657783.ngrok.io/logisticsC2CReplyURL"
     )
 
+    citySorted = schema.Text(
+        title=_(u"Taiwan's Sorted City List."),
+        required=False,
+    )
+
+    distList = schema.Text(
+        title=_(u"Taiwan's District and ZIP Code List"),
+        required=False,
+    )
     """ Logistics setting for AllPay """
 
 class AllpaySettingControlPanelForm(RegistryEditForm):
