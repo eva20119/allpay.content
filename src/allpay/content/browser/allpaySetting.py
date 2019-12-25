@@ -4,11 +4,12 @@ from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper
 from plone import api
 from plone.z3cform import layout
 from z3c.form import form
-from plone.directives import form as Form
+# from plone.directives import form as Form
 from zope import schema
+from zope.interface import Interface
 
 
-class IAllpaySetting(Form.Schema):
+class IAllpaySetting(Interface):
     """ Basic setting for AllPay """
     MerchantID = schema.TextLine(
         title=_(u"Merchant ID"),
