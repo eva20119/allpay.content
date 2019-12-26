@@ -3,32 +3,19 @@ from Products.Five.browser import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from plone import api
 from datetime import datetime
-import time
-import random
-import transaction
-import json
-import hashlib
-import urllib
-from Products.CMFPlone.utils import safe_unicode
+import importlib.util
 
 
 class Pay(BrowserView):
     allpay_config = 'allpay.content.browser.allpaySetting.IAllpaySetting'
 
     def __call__(self):
-        form = self.request.form
-        TotalAmount = 0
-        ItemName = ''
-        TradeDesc = ''
-        MerchantTradeNo = form['MerchantTradeNo']
-        del form['MerchantTradeNo']
-        del form['_authenticator']
-
-        for k, v in form.items():
-            json_data = json.loads(v)
-            ItemName += '%s,' % k
-            TotalAmount += json_data['amount'] * json_data['sale']
-            TradeDesc += '{} x {}#'.format(k, json_data['amount'])
+        spec = importlib.util.spec_from_file_location(
+            "ecpay_payment_sdk",
+            "/home/andy/Opptoday_dev/zeocluster/src/allpay.content/src/allpay/content/browser/static/ecpay_payment_sdk.py"
+        )
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
 
         abs_url = api.portal.get().absolute_url()
         allpay_config = self.allpay_config
@@ -40,42 +27,33 @@ class Pay(BrowserView):
         ClientBackURL = api.portal.get_registry_record('%s.ClientBackURL' % allpay_config)
         ReturnURL = api.portal.get_registry_record('%s.ReturnURL' % allpay_config)
         ChoosePayment = api.portal.get_registry_record('%s.ChoosePayment' % allpay_config)
-        payment_info = {
-            'MerchantTradeNo': MerchantTradeNo,# 訂單編號
-            'ItemName': TradeDesc, # 購物資訊
-            'TradeDesc': TradeDesc, # 購物資訊
-            'TotalAmount': TotalAmount, # 購物資訊
-            'ChoosePayment': ChoosePayment,
+
+        order_params = {
+            'MerchantTradeNo': datetime.now().strftime("Ming%Y%m%d%H%M%S"),
+            'MerchantTradeDate': datetime.now().strftime("%Y/%m/%d %H:%M:%S"),
             'PaymentType': 'aio',
+            'TotalAmount': 2000,
+            'TradeDesc': '白金會員',
+            'ItemName': '商品1#商品2',
+            'ReturnURL': abs_url + '/return_url',
+            'ChoosePayment': ChoosePayment,
+            'OrderResultURL': abs_url + '/client_back_url',
             'EncryptType': 1,
-            'ReturnURL': ReturnURL,
-            'MerchantTradeDate': datetime.now().strftime('%Y/%m/%d %H:%M:%S'),
-            'MerchantID': MerchantID,
-            'PaymentInfoURL': PaymentInfoURL,
-            'OrderResultURL': '%s' % ClientBackURL,
-            'ClientBackURL': '%s?buy=1' %abs_url
+            'Remark': 'user id'
         }
-        sortedString = ''
+        ecpay_payment_sdk = module.ECPayPaymentSdk(
+            MerchantID=MerchantID,
+            HashKey=hashKey,
+            HashIV=hashIv
+        )
         try:
-            for k, v in sorted(payment_info.items()):
-                sortedString += '%s=%s&' % (k, str(v))
-        except:
-            import pdb;pdb.set_trace()
-        sortedString = 'HashKey=%s&%sHashIV=%s' % (str(hashKey), sortedString, str(hashIv))
+            # 產生綠界訂單所需參數
+            final_order_params = ecpay_payment_sdk.create_order(order_params)
 
-        sortedString = urllib.quote_plus(sortedString).lower()
-        checkMacValue = hashlib.sha256(sortedString).hexdigest()
-        checkMacValue = checkMacValue.upper()
-        payment_info['CheckMacValue'] = checkMacValue
-
-        form_html = '<form id="allPay-Form" name="allPayForm" method="post" target="_self" action="%s" style="display: none;">' % AioCheckoutURL
-        for i, val in enumerate(payment_info):
-            try:
-                form_html = u"".join((form_html, u"<input type='hidden' name='{}' value='{}' />".format(val, safe_unicode(payment_info[val]))))
-            except:
-                form_html = u"".join((form_html, u"<input type='hidden' name='{}' value='{}' />".format(val, payment_info[val].decode('utf-8'))))
-        form_html = "".join((form_html, '<input type="submit" class="large" id="payment-btn" value="BUY" /></form>'))
-        form_html = "".join((form_html, "<script>document.allPayForm.submit();</script>"))
-
-        self.request.response.setCookie('shopCart', [], path='/')
-        return form_html
+            # 產生 html 的 form 格式
+            action_url = 'https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5'  # 測試環境
+            # action_url = 'https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5' # 正式環境
+            html = ecpay_payment_sdk.gen_html_post_form(action_url, final_order_params)
+            return html
+        except Exception as error:
+            print('An exception happened: ' + str(error))

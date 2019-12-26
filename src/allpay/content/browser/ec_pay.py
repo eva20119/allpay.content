@@ -4,7 +4,8 @@ from allpay.content import _
 from Products.Five.browser import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from plone import api
-from db.connect.browser.views import SqlObj
+from mingtak.ECBase.browser.views import SqlObj
+# from db.connect.browser.views import SqlObj
 from Products.CMFPlone.utils import safe_unicode
 import json
 from sqlalchemy import create_engine
@@ -107,6 +108,9 @@ class ClientBackUrl(BrowserView):
             form_html = "".join((form_html, '<input type="submit" class="large" id="payment-btn" value="BUY" style="display:none"/></form>'))
             form_html = "".join((form_html, "<script>document.allPayForm.submit();</script>"))
             return form_html
+        else:
+            # TODO
+            return 'trade fail'
 
 
 class LogisticsReplyURL(BrowserView):

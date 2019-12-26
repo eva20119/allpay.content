@@ -14,7 +14,8 @@ import logging
 import hashlib
 import urllib
 import re
-from db.connect.browser.views import SqlObj
+from mingtak.ECBase.browser.views import SqlObj
+# from db.connect.browser.views import SqlObj
 from Products.CMFPlone.utils import safe_unicode
 
 
