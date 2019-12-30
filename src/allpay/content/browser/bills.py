@@ -4,12 +4,28 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from plone import api
 from datetime import datetime
 import importlib.util
+import json
 
 
 class Pay(BrowserView):
     allpay_config = 'allpay.content.browser.allpaySetting.IAllpaySetting'
 
     def __call__(self):
+        request = self.request
+        abs_url = api.portal.get().absolute_url()
+        if api.user.is_anonymous():
+            request.response.redirect('%s/login' %abs_url)
+            api.portal.show_message(request=self.request, message='請先登入', type='error')
+            return
+
+        shop_cart = request.cookies.get('shop_cart')
+        if shop_cart:
+            shop_cart = json.loads(shop_cart)
+        else:
+            request.response.redirect('%s/product_lsiting' %abs_url)
+            api.portal.show_message(request=self.request, message='購物車內尚未有商品', type='error')
+            return
+
         spec = importlib.util.spec_from_file_location(
             "ecpay_payment_sdk",
             "/home/andy/Opptoday_dev/zeocluster/src/allpay.content/src/allpay/content/browser/static/ecpay_payment_sdk.py"
@@ -17,7 +33,6 @@ class Pay(BrowserView):
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
 
-        abs_url = api.portal.get().absolute_url()
         allpay_config = self.allpay_config
         hashKey = api.portal.get_registry_record('%s.CheckoutHashKey' % allpay_config)
         hashIv = api.portal.get_registry_record('%s.CheckoutHashIV' % allpay_config)
@@ -28,18 +43,27 @@ class Pay(BrowserView):
         ReturnURL = api.portal.get_registry_record('%s.ReturnURL' % allpay_config)
         ChoosePayment = api.portal.get_registry_record('%s.ChoosePayment' % allpay_config)
 
+        userId = api.user.get_current().id
+        ItemName = ''
+        TotalAmount = 0
+        for i in shop_cart:
+            obj = api.content.get(UID=i)
+            price = obj.salePrice or obj.listingPrice
+            ItemName += '%s:%s元, ' %(obj.title, price)
+            TotalAmount += int(price)
+
         order_params = {
             'MerchantTradeNo': datetime.now().strftime("Ming%Y%m%d%H%M%S"),
             'MerchantTradeDate': datetime.now().strftime("%Y/%m/%d %H:%M:%S"),
             'PaymentType': 'aio',
-            'TotalAmount': 2000,
-            'TradeDesc': '白金會員',
-            'ItemName': '商品1#商品2',
+            'TotalAmount': TotalAmount,
+            'TradeDesc': ItemName,
+            'ItemName': ItemName,
             'ReturnURL': abs_url + '/return_url',
             'ChoosePayment': ChoosePayment,
             'OrderResultURL': abs_url + '/client_back_url',
             'EncryptType': 1,
-            'Remark': 'user id'
+            'Remark': userId
         }
         ecpay_payment_sdk = module.ECPayPaymentSdk(
             MerchantID=MerchantID,
