@@ -13,17 +13,6 @@ import re
 from allpay.content.browser.logistics import LogisticsMap
 
 
-#ENGINE = create_engine('mysql+mysqldb://sayka:sayka@localhost/sayka?charset=utf8', echo=True)
-#class ManaBasic(BrowserView):
-
- #   def execSql(self, execStr):
-  #      conn = ENGINE.connect() # DB連線
-   #     execResult = conn.execute(execStr)
-    #    conn.close()
-     #   if execResult.returns_rows:
-      #      return execResult.fetchall()
-
-
 class PaymentInfo(BrowserView):
     def __call__(self):
         request = self.request
@@ -81,6 +70,8 @@ class ReturnUrl(BrowserView):
 class ClientBackUrl(BrowserView):
     def __call__(self):
         request = self.request
+        portal = api.portal.get()
+        abs_url = portal.absolute_url()
         # if not request.HTTP_REFERER.startswith("https://payment-stage.ecpay.com.tw"):
         #     self.request.response.redirect(api.portal.get().absolute_url())
         #     api.portal.show_message('%s' % '你無權訪問此網址 client_back'.decode('utf-8'), self.request, 'error')
@@ -89,28 +80,20 @@ class ClientBackUrl(BrowserView):
         RtnCode = request.get('RtnCode', '')
         MerchantTradeNo = request.get('MerchantTradeNo', '')
         if RtnCode == '1':
-            execStr = """SELECT send_type FROM order_set WHERE MerchantTradeNo = '{}'
-            """.format(MerchantTradeNo)
-            result = execSql.execSql(execStr)
+            shop_cart = json.loads(request.cookies.get('shop_cart'))
 
-            data = {
-                    'MerchantTradeNo': MerchantTradeNo,
-                   }
+            for i in shop_cart:
+                if 'sql_' in i:
+                    mysqlId = i.split('sql_')[1]
+                    sqlStr = """UPDATE cart SET isPay = 1 WHERE id = {}""".format(mysqlId)
+                    execSql.execSql(sqlStr)
 
-            if dict(result[0])['send_type'] == 'CVS':
-                form_html = '<form id="allPay-Form" name="allPayForm" method="post" target="_self" action="%s/logistics_map" style="disply: none;">' % api.portal.get().absolute_url()
-            else:
-                form_html = '<form id="allPay-Form" name="allPayForm" method="post" target="_self" action="%s/logistics_express" style="display: none;">' % api.portal.get().absolute_url()
-
-            for i, val in enumerate(data):
-                form_html = "".join((form_html, "<input type='hidden' name='{}' value='{}' />".format(val.decode('utf-8'), str(data[val]).decode('utf-8'))))
-
-            form_html = "".join((form_html, '<input type="submit" class="large" id="payment-btn" value="BUY" style="display:none"/></form>'))
-            form_html = "".join((form_html, "<script>document.allPayForm.submit();</script>"))
-            return form_html
+            request.response.setCookie('shop_cart', '', path='/OppToday')
+            api.portal.show_message(request=self.request, message='交易成功')
+            request.response.redirect(abs_url)
         else:
-            # TODO
-            return 'trade fail'
+            api.portal.show_message(request=self.request, message='交易失敗請在試一次', type='error')
+            request.response.redirect('%s/check_out' %abs_url)
 
 
 class LogisticsReplyURL(BrowserView):

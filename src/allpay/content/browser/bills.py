@@ -5,6 +5,7 @@ from plone import api
 from datetime import datetime
 import importlib.util
 import json
+from mingtak.ECBase.browser.views import SqlObj
 
 
 class Pay(BrowserView):
@@ -46,10 +47,19 @@ class Pay(BrowserView):
         userId = api.user.get_current().id
         ItemName = ''
         TotalAmount = 0
+        execSql = SqlObj()
         for i in shop_cart:
-            obj = api.content.get(UID=i)
-            price = obj.salePrice or obj.listingPrice
-            ItemName += '%s:%s元, ' %(obj.title, price)
+            if 'sql_' in i:
+                mysqlId = i.split('sql_')[1]
+                sqlStr = """SELECT price FROM cart WHERE id = {}""".format(mysqlId)
+                price = execSql.execSql(sqlStr)[0][0]
+                title = '分析報告'
+            else:
+                obj = api.content.get(UID=i)
+                price = obj.salePrice or obj.listingPrice
+                title = obj.title
+
+            ItemName += '%s:%s元, ' %(title, price)
             TotalAmount += int(price)
 
         order_params = {
