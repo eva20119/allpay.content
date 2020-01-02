@@ -7,7 +7,6 @@ import importlib.util
 import json
 from mingtak.ECBase.browser.views import SqlObj
 
-
 class Pay(BrowserView):
     allpay_config = 'allpay.content.browser.allpaySetting.IAllpaySetting'
 
@@ -20,7 +19,10 @@ class Pay(BrowserView):
             return
 
         shop_cart = request.cookies.get('shop_cart')
-        if shop_cart:
+        buyDuration = request.get('buyDuration')
+        if buyDuration:
+            pass
+        elif shop_cart:
             shop_cart = json.loads(shop_cart)
         else:
             request.response.redirect('%s/product_lsiting' %abs_url)
@@ -48,19 +50,36 @@ class Pay(BrowserView):
         ItemName = ''
         TotalAmount = 0
         execSql = SqlObj()
-        for i in shop_cart:
-            if 'sql_' in i:
-                mysqlId = i.split('sql_')[1]
-                sqlStr = """SELECT price FROM cart WHERE id = {}""".format(mysqlId)
-                price = execSql.execSql(sqlStr)[0][0]
-                title = '分析報告'
-            else:
-                obj = api.content.get(UID=i)
-                price = obj.salePrice or obj.listingPrice
-                title = obj.title
+        isBuyDuration = 'no_buy'
 
-            ItemName += '%s:%s元, ' %(title, price)
-            TotalAmount += int(price)
+        if buyDuration:
+            duration = request.get('duration')
+            price = request.get('price')
+            TotalAmount = int(price)
+            isBuyDuration = 'buy'
+            # 解決client_back_url 後若購物車有商品會被視為繳費, 可以多加一格cookie參數當判斷
+            if duration == 'season':
+                ItemName = '季繳:%s元' %(price)
+            elif duration == 'year':
+                ItemName = '年繳:%s元' %(price)
+            else:
+                request.response.redirect(abs_url)
+                api.portal.show_message(request=self.request, message='購買失敗', type='error')
+                return
+        else:
+            for i in shop_cart:
+                if 'sql_' in i:
+                    mysqlId = i.split('sql_')[1]
+                    sqlStr = """SELECT price FROM cart WHERE id = {}""".format(mysqlId)
+                    price = execSql.execSql(sqlStr)[0][0]
+                    title = '分析報告'
+                else:
+                    obj = api.content.get(UID=i)
+                    price = obj.salePrice or obj.listingPrice
+                    title = obj.title
+
+                ItemName += '%s:%s元, ' %(title, price)
+                TotalAmount += int(price)
 
         order_params = {
             'MerchantTradeNo': datetime.now().strftime("Ming%Y%m%d%H%M%S"),
@@ -73,7 +92,8 @@ class Pay(BrowserView):
             'ChoosePayment': ChoosePayment,
             'OrderResultURL': abs_url + '/client_back_url',
             'EncryptType': 1,
-            'Remark': userId
+            'CustomField1': isBuyDuration,
+            'Remark': userId,
         }
         ecpay_payment_sdk = module.ECPayPaymentSdk(
             MerchantID=MerchantID,

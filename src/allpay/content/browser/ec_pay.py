@@ -79,21 +79,31 @@ class ClientBackUrl(BrowserView):
         execSql = SqlObj()
         RtnCode = request.get('RtnCode', '')
         MerchantTradeNo = request.get('MerchantTradeNo', '')
+        CustomField1 = request.get('CustomField1')
+
         if RtnCode == '1':
-            shop_cart = json.loads(request.cookies.get('shop_cart'))
+            # 購買會員資格不清空購物車
+            if CustomField1 == 'no_buy':
+                shop_cart = json.loads(request.cookies.get('shop_cart'))
+                for i in shop_cart:
+                    if 'sql_' in i:
+                        mysqlId = i.split('sql_')[1]
+                        sqlStr = """UPDATE cart SET isPay = 1 WHERE id = {}""".format(mysqlId)
+                        execSql.execSql(sqlStr)
 
-            for i in shop_cart:
-                if 'sql_' in i:
-                    mysqlId = i.split('sql_')[1]
-                    sqlStr = """UPDATE cart SET isPay = 1 WHERE id = {}""".format(mysqlId)
-                    execSql.execSql(sqlStr)
+                request.response.setCookie('shop_cart', '', path='/OppToday')
 
-            request.response.setCookie('shop_cart', '', path='/OppToday')
             api.portal.show_message(request=self.request, message='交易成功')
             request.response.redirect(abs_url)
         else:
             api.portal.show_message(request=self.request, message='交易失敗請在試一次', type='error')
-            request.response.redirect('%s/check_out' %abs_url)
+            backUrl = abs_url
+            if CustomField1 == 'no_buy':
+                backUrl += '/check_out'
+            elif CustomField1 == 'buy':
+                backUrl += '/pricing'
+
+            request.response.redirect(backUrl)
 
 
 class LogisticsReplyURL(BrowserView):
