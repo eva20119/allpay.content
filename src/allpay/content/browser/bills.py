@@ -57,6 +57,7 @@ class Pay(BrowserView):
             price = request.get('price')
             TotalAmount = int(price)
             isBuyDuration = 'buy'
+            userId += '_duration'
             # 解決client_back_url 後若購物車有商品會被視為繳費, 可以多加一格cookie參數當判斷
             if duration == 'season':
                 ItemName = '季繳:%s元' %(price)
@@ -67,6 +68,7 @@ class Pay(BrowserView):
                 api.portal.show_message(request=self.request, message='購買失敗', type='error')
                 return
         else:
+            userId += '_cart'
             for i in shop_cart:
                 if 'sql_' in i:
                     mysqlId = i.split('sql_')[1]

@@ -11,6 +11,7 @@ import json
 from sqlalchemy import create_engine
 import re
 from allpay.content.browser.logistics import LogisticsMap
+from datetime import datetime
 
 
 class PaymentInfo(BrowserView):
@@ -85,10 +86,12 @@ class ClientBackUrl(BrowserView):
             # 購買會員資格不清空購物車
             if CustomField1 == 'no_buy':
                 shop_cart = json.loads(request.cookies.get('shop_cart'))
+                now = datetime.now().strftime('%Y-%m-%d %H:%M')
                 for i in shop_cart:
                     if 'sql_' in i:
                         mysqlId = i.split('sql_')[1]
-                        sqlStr = """UPDATE cart SET isPay = 1 WHERE id = {}""".format(mysqlId)
+                        sqlStr = """UPDATE cart SET isPay = 1, payTime = '{}' WHERE id = {}
+                            """.format(now, mysqlId)
                         execSql.execSql(sqlStr)
 
                 request.response.setCookie('shop_cart', '', path='/OppToday')
