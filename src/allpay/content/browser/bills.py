@@ -60,7 +60,6 @@ class Pay(BrowserView):
             TotalAmount = int(price)
             # 解決client_back_url 後若購物車有商品會被視為繳費
             isBuyDuration = 'buy'
-            userId += '_duration'
             if duration == 'season':
                 ItemName = '季繳:%s元' %(price)
             elif duration == 'year':
@@ -70,10 +69,9 @@ class Pay(BrowserView):
                 api.portal.show_message(request=self.request, message='購買失敗', type='error')
                 return
             sqlStr = """INSERT INTO history(MerchantTradeNo, user, membership, money) 
-                VALUES('{}', '{}', '{}', {})""".format(MerchantTradeNo, userId, duration, TotalAmount)
+                VALUES('{}', '{}', '{}', {})""".format(MerchantTradeNo, userId, ItemName, TotalAmount)
 
         else:
-            userId += '_cart'
             uidList = []
             cartId = []
             for i in shop_cart:
@@ -110,11 +108,10 @@ class Pay(BrowserView):
             'ItemName': ItemName,
             'ReturnURL': abs_url + '/return_url',
             'ChoosePayment': ChoosePayment,
-            'OrderResultURL': abs_url + '/client_back_url',
+            'OrderResultURL': abs_url + '/order_result_url',
             'ClientBackURL': abs_url,
             'EncryptType': 1,
             'CustomField1': isBuyDuration,
-            'Remark': userId,
         }
         ecpay_payment_sdk = module.ECPayPaymentSdk(
             MerchantID=MerchantID,

@@ -68,7 +68,7 @@ class ReturnUrl(BrowserView):
             return 0
 
 
-class ClientBackUrl(BrowserView):
+class OrderResultUrl(BrowserView):
     def __call__(self):
         request = self.request
         portal = api.portal.get()

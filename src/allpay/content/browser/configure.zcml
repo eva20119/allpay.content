@@ -55,9 +55,9 @@
       />
 
   <browser:page
-      name="client_back_url"
+      name="order_result_url"
       for="*"
-      class=".ec_pay.ClientBackUrl"
+      class=".ec_pay.OrderResultUrl"
       permission="zope2.View"
       />
 
