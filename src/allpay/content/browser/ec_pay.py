@@ -73,15 +73,10 @@ class ClientBackUrl(BrowserView):
         request = self.request
         portal = api.portal.get()
         abs_url = portal.absolute_url()
-        # if not request.HTTP_REFERER.startswith("https://payment-stage.ecpay.com.tw"):
-        #     self.request.response.redirect(api.portal.get().absolute_url())
-        #     api.portal.show_message('%s' % '你無權訪問此網址 client_back'.decode('utf-8'), self.request, 'error')
-        #     return
         execSql = SqlObj()
         RtnCode = request.get('RtnCode', '')
         MerchantTradeNo = request.get('MerchantTradeNo', '')
         CustomField1 = request.get('CustomField1')
-
         if RtnCode == '1':
             # 購買會員資格不清空購物車
             if CustomField1 == 'no_buy':
@@ -95,6 +90,9 @@ class ClientBackUrl(BrowserView):
                         execSql.execSql(sqlStr)
 
                 request.response.setCookie('shop_cart', '', path='/OppToday')
+
+            sqlStr = """UPDATE history SET isPay=1 WHERE MerchantTradeNo='{}'""".format(MerchantTradeNo)
+            execSql.execSql(sqlStr)
 
             api.portal.show_message(request=self.request, message='交易成功')
             request.response.redirect(abs_url)
@@ -112,7 +110,6 @@ class ClientBackUrl(BrowserView):
 class LogisticsReplyURL(BrowserView):
     def __call__(self):
         request = self.request
-
         if request.HTTP_REFERER != "http://ecpay.com.tw":
             self.request.response.redirect(api.portal.get().absolute_url())
             api.portal.show_message('%s' % '你無權訪問此網址 logis_reply'.decode('utf-8'), self.request, 'error')

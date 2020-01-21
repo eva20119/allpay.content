@@ -25,7 +25,7 @@ class Pay(BrowserView):
         elif shop_cart:
             shop_cart = json.loads(shop_cart)
         else:
-            request.response.redirect('%s/product_lsiting' %abs_url)
+            request.response.redirect(abs_url)
             api.portal.show_message(request=self.request, message='購物車內尚未有商品', type='error')
             return
 
@@ -52,13 +52,15 @@ class Pay(BrowserView):
         execSql = SqlObj()
         isBuyDuration = 'no_buy'
 
+        MerchantTradeNo = datetime.now().strftime("Ming%Y%m%d%H%M%S")
+
         if buyDuration:
             duration = request.get('duration')
             price = request.get('price')
             TotalAmount = int(price)
+            # 解決client_back_url 後若購物車有商品會被視為繳費
             isBuyDuration = 'buy'
             userId += '_duration'
-            # 解決client_back_url 後若購物車有商品會被視為繳費, 可以多加一格cookie參數當判斷
             if duration == 'season':
                 ItemName = '季繳:%s元' %(price)
             elif duration == 'year':
@@ -67,24 +69,40 @@ class Pay(BrowserView):
                 request.response.redirect(abs_url)
                 api.portal.show_message(request=self.request, message='購買失敗', type='error')
                 return
+            sqlStr = """INSERT INTO history(MerchantTradeNo, user, membership, money) 
+                VALUES('{}', '{}', '{}', {})""".format(MerchantTradeNo, userId, duration, TotalAmount)
+
         else:
             userId += '_cart'
+            uidList = []
+            cartId = []
             for i in shop_cart:
                 if 'sql_' in i:
                     mysqlId = i.split('sql_')[1]
                     sqlStr = """SELECT price FROM cart WHERE id = {}""".format(mysqlId)
                     price = execSql.execSql(sqlStr)[0][0]
                     title = '分析報告'
+                    cartId.append(mysqlId)
                 else:
                     obj = api.content.get(UID=i)
                     price = obj.salePrice or obj.listingPrice
                     title = obj.title
+                    uidList.append(i)
 
                 ItemName += '%s:%s元, ' %(title, price)
                 TotalAmount += int(price)
 
+            uidList = json.dumps(uidList) if uidList else ''
+            cartId = json.dumps(cartId) if cartId else ''
+
+            sqlStr = """INSERT INTO history(MerchantTradeNo, user, cartId, uid, money) 
+                VALUES('{}', '{}', '{}', '{}', {})""".format(MerchantTradeNo, userId, cartId, uidList, TotalAmount)
+        
+        # 將購買紀錄寫進資料庫
+        execSql.execSql(sqlStr)
+        
         order_params = {
-            'MerchantTradeNo': datetime.now().strftime("Ming%Y%m%d%H%M%S"),
+            'MerchantTradeNo': MerchantTradeNo,
             'MerchantTradeDate': datetime.now().strftime("%Y/%m/%d %H:%M:%S"),
             'PaymentType': 'aio',
             'TotalAmount': TotalAmount,
@@ -93,6 +111,7 @@ class Pay(BrowserView):
             'ReturnURL': abs_url + '/return_url',
             'ChoosePayment': ChoosePayment,
             'OrderResultURL': abs_url + '/client_back_url',
+            'ClientBackURL': abs_url,
             'EncryptType': 1,
             'CustomField1': isBuyDuration,
             'Remark': userId,
