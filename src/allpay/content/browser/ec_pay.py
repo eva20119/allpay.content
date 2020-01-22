@@ -51,6 +51,7 @@ class ReturnUrl(BrowserView):
         execSql = SqlObj()
         atm_match = re.match(r'^ATM', PaymentType)
         webatm_match = re.match(r'^WebATM', PaymentType)
+        #TODO
         if RtnCode == '1':
             if atm_match != None or PaymentType == 'BARCODE_BARCODE' or PaymentType == 'CVS_CVS':
                 execStr = """UPDATE ec_pay SET PaymentDate = '{}',ExpireDate = ' '
@@ -79,7 +80,7 @@ class OrderResultUrl(BrowserView):
         CustomField1 = request.get('CustomField1')
         if RtnCode == '1':
             # 購買會員資格不清空購物車
-            if CustomField1 == 'no_buy':
+            if CustomField1 == 'buyCart':
                 shop_cart = json.loads(request.cookies.get('shop_cart'))
                 now = datetime.now().strftime('%Y-%m-%d %H:%M')
                 for i in shop_cart:
@@ -99,9 +100,9 @@ class OrderResultUrl(BrowserView):
         else:
             api.portal.show_message(request=self.request, message='交易失敗請在試一次', type='error')
             backUrl = abs_url
-            if CustomField1 == 'no_buy':
-                backUrl += '/check_out'
-            elif CustomField1 == 'buy':
+            if CustomField1 == 'buyCart':
+                backUrl += '/order_history'
+            elif CustomField1 == 'buyDuration':
                 backUrl += '/pricing'
 
             request.response.redirect(backUrl)

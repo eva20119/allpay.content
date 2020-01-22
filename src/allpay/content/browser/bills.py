@@ -7,6 +7,7 @@ import importlib.util
 import json
 from mingtak.ECBase.browser.views import SqlObj
 
+
 class Pay(BrowserView):
     allpay_config = 'allpay.content.browser.allpaySetting.IAllpaySetting'
 
@@ -50,7 +51,7 @@ class Pay(BrowserView):
         ItemName = ''
         TotalAmount = 0
         execSql = SqlObj()
-        isBuyDuration = 'no_buy'
+        isBuyDuration = 'buyCart'
 
         MerchantTradeNo = datetime.now().strftime("Ming%Y%m%d%H%M%S")
 
@@ -59,7 +60,7 @@ class Pay(BrowserView):
             price = request.get('price')
             TotalAmount = int(price)
             # 解決client_back_url 後若購物車有商品會被視為繳費
-            isBuyDuration = 'buy'
+            isBuyDuration = 'buyDuration'
             if duration == 'season':
                 ItemName = '季繳:%s元' %(price)
             elif duration == 'year':
@@ -70,7 +71,6 @@ class Pay(BrowserView):
                 return
             sqlStr = """INSERT INTO history(MerchantTradeNo, user, membership, money) 
                 VALUES('{}', '{}', '{}', {})""".format(MerchantTradeNo, userId, ItemName, TotalAmount)
-
         else:
             uidList = []
             cartId = []
@@ -125,6 +125,8 @@ class Pay(BrowserView):
             # 產生 html 的 form 格式
             action_url = 'https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5'  # 測試環境
             # action_url = 'https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5' # 正式環境
+
+            request.response.setCookie('shop_cart', '', path='/OppToday')
             html = ecpay_payment_sdk.gen_html_post_form(action_url, final_order_params)
             return html
         except Exception as error:
