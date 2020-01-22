@@ -80,23 +80,12 @@ class OrderResultUrl(BrowserView):
         CustomField1 = request.get('CustomField1')
         if RtnCode == '1':
             # 購買會員資格不清空購物車
-            if CustomField1 == 'buyCart':
-                shop_cart = json.loads(request.cookies.get('shop_cart'))
-                now = datetime.now().strftime('%Y-%m-%d %H:%M')
-                for i in shop_cart:
-                    if 'sql_' in i:
-                        mysqlId = i.split('sql_')[1]
-                        sqlStr = """UPDATE cart SET isPay = 1, payTime = '{}' WHERE id = {}
-                            """.format(now, mysqlId)
-                        execSql.execSql(sqlStr)
-
-                request.response.setCookie('shop_cart', '', path='/OppToday')
 
             sqlStr = """UPDATE history SET isPay=1 WHERE MerchantTradeNo='{}'""".format(MerchantTradeNo)
             execSql.execSql(sqlStr)
 
             api.portal.show_message(request=self.request, message='交易成功')
-            request.response.redirect(abs_url)
+            request.response.redirect(abs_url + '/order_history')
         else:
             api.portal.show_message(request=self.request, message='交易失敗請在試一次', type='error')
             backUrl = abs_url

@@ -42,9 +42,6 @@ class Pay(BrowserView):
         hashIv = api.portal.get_registry_record('%s.CheckoutHashIV' % allpay_config)
         MerchantID = api.portal.get_registry_record('%s.MerchantID' % allpay_config)
         AioCheckoutURL = api.portal.get_registry_record('%s.AioCheckoutURL' % allpay_config)
-        PaymentInfoURL = api.portal.get_registry_record('%s.PaymentInfoURL' % allpay_config)
-        ClientBackURL = api.portal.get_registry_record('%s.ClientBackURL' % allpay_config)
-        ReturnURL = api.portal.get_registry_record('%s.ReturnURL' % allpay_config)
         ChoosePayment = api.portal.get_registry_record('%s.ChoosePayment' % allpay_config)
 
         userId = api.user.get_current().id
@@ -122,12 +119,8 @@ class Pay(BrowserView):
             # 產生綠界訂單所需參數
             final_order_params = ecpay_payment_sdk.create_order(order_params)
 
-            # 產生 html 的 form 格式
-            action_url = 'https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5'  # 測試環境
-            # action_url = 'https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5' # 正式環境
-
             request.response.setCookie('shop_cart', '', path='/OppToday')
-            html = ecpay_payment_sdk.gen_html_post_form(action_url, final_order_params)
+            html = ecpay_payment_sdk.gen_html_post_form(AioCheckoutURL, final_order_params)
             return html
         except Exception as error:
             print('An exception happened: ' + str(error))
